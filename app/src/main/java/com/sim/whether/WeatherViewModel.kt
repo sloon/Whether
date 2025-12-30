@@ -4,12 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sim.whether.network.Response
 import com.sim.whether.network.WeatherRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class WeatherViewModel : ViewModel() {
-    private val weatherRepository = WeatherRepository()
+@HiltViewModel
+class WeatherViewModel @Inject constructor(
+    private val weatherRepository: WeatherRepository
+) : ViewModel() {
 
     // Backing property to avoid state updates from other classes
     private val _uiState: MutableStateFlow<Response> =
