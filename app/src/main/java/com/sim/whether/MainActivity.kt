@@ -8,16 +8,15 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.sim.whether.network.Response
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
 import com.sim.whether.ui.theme.WhetherTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.Serializable
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -30,35 +29,39 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WhetherTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        modifier = Modifier.padding(innerPadding),
-                        viewModel = weatherViewModel,
-                    )
-                }
+                val backStack = rememberNavBackStack(MainRoute)
+                NavDisplay(
+                    backStack = backStack,
+                    onBack = { backStack.removeLastOrNull() },
+                    entryProvider = entryProvider<NavKey> {
+                        entry<MainRoute> {
+                            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                                WeatherMainScreen(
+                                    onNavigateToSubScreen = {
+                                        backStack.add(SubRoute)
+                                    },
+                                    modifier = Modifier.padding(innerPadding),
+                                    viewModel = weatherViewModel,
+                                )
+                            }
+                        }
+                        entry<SubRoute> {
+                            Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                                WeatherSubScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    viewModel = weatherViewModel,
+                                )
+                            }
+                        }
+                    }
+                )
             }
         }
     }
 }
 
-@Composable
-fun Greeting(modifier: Modifier = Modifier, viewModel: WeatherViewModel = viewModel()) {
+@Serializable
+object MainRoute : NavKey
 
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    Text(
-        text = when(uiState) {
-            is Response.Success -> (uiState as Response.Success).data.toString()
-            is Response.Error -> (uiState as Response.Error).toString()
-        },
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    WhetherTheme {
-        Greeting()
-    }
-}
+@Serializable
+object SubRoute : NavKey
